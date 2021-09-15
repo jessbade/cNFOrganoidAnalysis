@@ -12,6 +12,9 @@ library(GSVA)
 library(reticulate)
 library(stringi)
 library(cowplot)
+library(Hmisc)
+library(dendextend)
+library(gplots)
 syn=reticulate::import('synapseclient')
 sync=syn$login()
 pal = nationalparkcolors::park_palette('Acadia')
@@ -52,6 +55,18 @@ for (x in names) {
 res <- gsva(mat.rest,GSET,method="gsva",min.sz=1,max.sz=Inf,mx.diff=TRUE,parallel.sz=1,verbose=TRUE)
 res <- t(as.data.frame(res))
 print(res)
+
+expr.dat <- data.matrix(res)
+#row.names(expr.dat) <- out.dat[,1]
+#expr.dat <- expr.dat[,-1]
+#dev.new(width=10,height=5)
+method="pearson" #"euclidean"
+png(file=paste0("heatmap_gsva_",method,".png"),width=20,height=5)
+v <- Hmisc::varclus(expr.dat,similarity=method)
+dend <- as.dendrogram(v)
+heatmap.2(expr.dat,key=TRUE, symkey=TRUE,density.info="none",col=pal,cexRow=1,cexCol=1,margins=c(8,16),trace="none",srtCol=45) #,Colv = dend
+dev.off()
+
 
 master_table <- as.data.frame(res) %>%
                 tibble::rownames_to_column(var='specimenID') %>%
